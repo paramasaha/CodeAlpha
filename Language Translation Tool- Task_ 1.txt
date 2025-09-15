@@ -1,0 +1,167 @@
+import React, { useState } from 'react';
+
+const TranslationTool = () => {
+  const [sourceLang, setSourceLang] = useState('en');
+  const [targetLang, setTargetLang] = useState('es');
+  const [inputText, setInputText] = useState('');
+  const [translatedText, setTranslatedText] = useState('');
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'es', name: 'Spanish' },
+    { code: 'fr', name: 'French' },
+    { code: 'de', name: 'German' },
+    { code: 'it', name: 'Italian' },
+    { code: 'pt', name: 'Portuguese' },
+    { code: 'ru', name: 'Russian' },
+    { code: 'zh', name: 'Chinese' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'ko', name: 'Korean' },
+    { code: 'ar', name: 'Arabic' },
+    { code: 'hi', name: 'Hindi' }
+  ];
+
+  const handleTranslate = () => {
+    // Mock translation functionality - in a real app, this would call an API
+    const mockTranslations: Record<string, Record<string, string>> = {
+      'en': {
+        'es': 'Hola, esto es un texto de ejemplo traducido al español.',
+        'fr': 'Bonjour, ceci est un texte exemple traduit en français.',
+        'de': 'Hallo, dies ist ein Beispieltext, der ins Deutsche übersetzt wurde.',
+        'it': 'Ciao, questo è un testo di esempio tradotto in italiano.',
+        'pt': 'Olá, este é um texto de exemplo traduzido para português.',
+        'ru': 'Привет, это пример текста, переведенного на русский язык.',
+        'zh': '你好，这是翻译成中文的示例文本。',
+        'ja': 'こんにちは、これは日本語に翻訳されたサンプルテキストです。',
+        'ko': '안녕하세요, 한국어로 번역된 예시 텍스트입니다.',
+        'ar': 'مرحبًا، هذا هو مثال لنص مترجم إلى العربية.',
+        'hi': 'नमस्ते, यह हिंदी में अनुवादित एक उदाहरण पाठ है。'
+      }
+    };
+    
+    if (inputText.trim() && sourceLang === 'en') {
+      setTranslatedText(mockTranslations[sourceLang][targetLang] || 'Translation not available');
+    } else if (inputText.trim()) {
+      setTranslatedText('(For demonstration, only English to other languages is supported)');
+    } else {
+      setTranslatedText('');
+    }
+  };
+
+  const handleSwapLanguages = () => {
+    setSourceLang(targetLang);
+    setTargetLang(sourceLang);
+    setInputText(translatedText);
+    setTranslatedText(inputText);
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-6 flex flex-col items-center justify-center">
+      <div className="w-full max-w-4xl bg-card rounded-lg shadow-lg p-6">
+        <h1 className="text-3xl font-bold text-center text-primary mb-8">
+          Multi-Language Translator
+        </h1>
+        
+        <div className="flex flex-col md:flex-row gap-6 mb-6">
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="sourceLang" className="text-sm font-medium text-foreground">
+                From:
+              </label>
+            </div>
+            <select
+              id="sourceLang"
+              value={sourceLang}
+              onChange={(e) => setSourceLang(e.target.value)}
+              className="w-full p-3 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {languages.map((lang) => (
+                <option key={`source-${lang.code}`} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <div className="flex items-center justify-center">
+            <button
+              onClick={handleSwapLanguages}
+              className="p-3 bg-muted rounded-full hover:bg-accent transition-colors"
+              aria-label="Swap languages"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="text-foreground"
+              >
+                <path d="m16 3 4 4-4 4" />
+                <path d="M20 7H4" />
+                <path d="m8 21-4-4 4-4" />
+                <path d="M4 17h16" />
+              </svg>
+            </button>
+          </div>
+          
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <label htmlFor="targetLang" className="text-sm font-medium text-foreground">
+                To:
+              </label>
+            </div>
+            <select
+              id="targetLang"
+              value={targetLang}
+              onChange={(e) => setTargetLang(e.target.value)}
+              className="w-full p-3 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              {languages.map((lang) => (
+                <option key={`target-${lang.code}`} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        
+        <div className="flex flex-col md:flex-row gap-6 mb-6">
+          <div className="flex-1">
+            <textarea
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              placeholder="Enter text to translate"
+              className="w-full h-48 p-4 border border-border rounded-md bg-muted text-foreground focus:outline-none focus:ring-2 focus:ring-primary resize-none"
+            />
+          </div>
+          
+          <div className="flex-1">
+            <div className="w-full h-48 p-4 border border-border rounded-md bg-muted overflow-y-auto">
+              <p className="text-foreground">{translatedText || 'Translation will appear here'}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex justify-center">
+          <button
+            onClick={handleTranslate}
+            className="px-6 py-3 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors font-medium"
+          >
+            Translate
+          </button>
+        </div>
+      </div>
+      
+      <div className="mt-8 text-center text-muted-foreground text-sm">
+        <p>This is a demonstration interface. In a real application, this would connect to a translation API.</p>
+      </div>
+    </div>
+  );
+};
+
+export default TranslationTool;
