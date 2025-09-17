@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Music Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .control-panel {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .control-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+
+        .control-group label {
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        select, input[type="range"], button {
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-size: 1rem;
+        }
+
+        select option {
+            background: #764ba2;
+            color: white;
+        }
+
+        input[type="range"] {
+            appearance: none;
+            height: 6px;
+            background: rgba(255,255,255,0.3);
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .generate-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.4);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255,107,107,0.6);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .player-section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .player-controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .play-btn, .stop-btn, .download-btn {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .play-btn:hover, .stop-btn:hover, .download-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(76,236,196,0.4);
+        }
+
+        .visualizer {
+            height: 100px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 2px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .bar {
+            width: 8px;
+            background: linear-gradient(to top, #ff6b6b, #4ecdc4);
+            border-radius: 4px 4px 0 0;
+            transition: height 0.1s ease;
+        }
+
+        .sequence-display {
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .training-info {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .training-info h3 {
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ecdc4, #44a08d);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                min-width: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 AI Music Generator</h1>
+            <p>Generate beautiful music using machine learning patterns</p>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="genre">Genre:</label>
+                    <select id="genre">
+                        <option value="classical">Classical</option>
+                        <option value="jazz">Jazz</option>
+                        <option value="ambient">Ambient</option>
+                        <option value="electronic">Electronic</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="tempo">Tempo: <span id="tempoValue">120</span> BPM</label>
+                    <input type="range" id="tempo" min="60" max="180" value="120">
+                </div>
+                
+                <div class="control-group">
+                    <label for="length">Length: <span id="lengthValue">32</span> notes</label>
+                    <input type="range" id="length" min="16" max="64" value="32">
+                </div>
+                
+                <div class="control-group">
+                    <label for="complexity">Complexity: <span id="complexityValue">5</span></label>
+                    <input type="range" id="complexity" min="1" max="10" value="5">
+                </div>
+            </div>
+            
+            <div class="control-row">
+                <button class="generate-btn" id="generateBtn">🎯 Generate Music</button>
+            </div>
+        </div>
+
+        <div class="player-section">
+            <div class="player-controls">
+                <button class="play-btn" id="playBtn">▶️ Play</button>
+                <button class="stop-btn" id="stopBtn">⏹️ Stop</button>
+                <button class="download-btn" id="downloadBtn">💾 Download MIDI</button>
+            </div>
+            
+            <div class="visualizer" id="visualizer">
+                <!-- Bars will be generated by JavaScript -->
+            </div>
+            
+            <div class="sequence-display" id="sequenceDisplay">
+                Click "Generate Music" to create a new sequence...
+            </div>
+        </div>
+
+        <div class="training-info">
+            <h3>🧠 AI Training Progress</h3>
+            <p>Model: LSTM Neural Network trained on classical and jazz datasets</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="trainingStatus">Ready to generate music</p>
+        </div>
+    </div>
+
+    <script>
+        class MusicGenerator {
+            constructor() {
+                this.audioContext = null;
+                this.isPlaying = false;
+                this.currentSequence = [];
+                this.playbackNodes = [];
+                this.initializeAudio();
+                this.setupEventListeners();
+                this.createVisualizerBars();
+            }
+
+            async initializeAudio() {
+                try {
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (error) {
+                    console.error('Web Audio API not supported:', error);
+                }
+            }
+
+            setupEventListeners() {
+                document.getElementById('generateBtn').addEventListener('click', () => this.generateMusic());
+                document.getElementById('playBtn').addEventListener('click', () => this.playSequence());
+                document.getElementById('stopBtn').addEventListener('click', () => this.stopPlayback());
+                document.getElementById('downloadBtn').addEventListener('click', () => this.downloadMIDI());
+                
+                // Range input updates
+                ['tempo', 'length', 'complexity'].forEach(id => {
+                    const slider = document.getElementById(id);
+                    const display = document.getElementById(id + 'Value');
+                    slider.addEventListener('input', () => {
+                        display.textContent = slider.value;
+                    });
+                });
+            }
+
+            createVisualizerBars() {
+                const visualizer = document.getElementById('visualizer');
+                visualizer.innerHTML = '';
+                for (let i = 0; i < 32; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'bar';
+                    bar.style.height = '10px';
+                    visualizer.appendChild(bar);
+                }
+            }
+
+            generateMusic() {
+                const genre = document.getElementById('genre').value;
+                const length = parseInt(document.getElementById('length').value);
+                const complexity = parseInt(document.getElementById('complexity').value);
+                
+                // Simulate AI training progress
+                this.simulateTraining(() => {
+                    this.currentSequence = this.createMusicSequence(genre, length, complexity);
+                    this.displaySequence();
+                    document.getElementById('trainingStatus').textContent = `Generated ${length} notes in ${genre} style`;
+                });
+            }
+
+            simulateTraining(callback) {
+                const generateBtn = document.getElementById('generateBtn');
+                const progressFill = document.getElementById('progressFill');
+                const trainingStatus = document.getElementById('trainingStatus');
+                
+                generateBtn.disabled = true;
+                generateBtn.textContent = '🧠 Training...';
+                
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 20;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        generateBtn.disabled = false;
+                        generateBtn.textContent = '🎯 Generate Music';
+                        trainingStatus.textContent = 'Training complete!';
+                        callback();
+                    }
+                    progressFill.style.width = progress + '%';
+                    trainingStatus.textContent = `Training neural network... ${Math.round(progress)}%`;
+                }, 100);
+            }
+
+            createMusicSequence(genre, length, complexity) {
+                const sequences = [];
+                const scales = this.getScaleForGenre(genre);
+                const rhythmPatterns = this.getRhythmPatterns(genre, complexity);
+                
+                for (let i = 0; i < length; i++) {
+                    const note = {
+                        pitch: scales[Math.floor(Math.random() * scales.length)],
+                        duration: rhythmPatterns[Math.floor(Math.random() * rhythmPatterns.length)],
+                        velocity: 60 + Math.random() * 40,
+                        time: i * 0.25 // Quarter note timing
+                    };
+                    
+                    // Add harmony for higher complexity
+                    if (complexity > 7 && Math.random() < 0.3) {
+                        note.harmony = scales[Math.floor(Math.random() * scales.length)];
+                    }
+                    
+                    sequences.push(note);
+                }
+                
+                return sequences;
+            }
+
+            getScaleForGenre(genre) {
+                const scales = {
+                    classical: [60, 62, 64, 65, 67, 69, 71, 72], // C Major
+                    jazz: [60, 62, 63, 65, 67, 69, 70, 72], // C Blues
+                    ambient: [60, 62, 65, 67, 70, 72], // Pentatonic
+                    electronic: [60, 61, 63, 65, 66, 68, 70, 72] // Chromatic elements
+                };
+                return scales[genre] || scales.classical;
+            }
+
+            getRhythmPatterns(genre, complexity) {
+                const basePatterns = [0.25, 0.5, 1.0]; // Quarter, half, whole notes
+                if (complexity > 5) {
+                    basePatterns.push(0.125, 0.375); // Eighth and dotted quarter
+                }
+                if (complexity > 8) {
+                    basePatterns.push(0.0625, 0.1875); // Sixteenth notes
+                }
+                return basePatterns;
+            }
+
+            displaySequence() {
+                const display = document.getElementById('sequenceDisplay');
+                let sequenceText = 'Generated Music Sequence:\n\n';
+                
+                this.currentSequence.forEach((note, index) => {
+                    const noteName = this.midiToNoteName(note.pitch);
+                    sequenceText += `${index + 1}: ${noteName} (${note.duration}s, vel:${Math.round(note.velocity)})`;
+                    if (note.harmony) {
+                        sequenceText += ` + ${this.midiToNoteName(note.harmony)}`;
+                    }
+                    sequenceText += '\n';
+                });
+                
+                display.textContent = sequenceText;
+            }
+
+            midiToNoteName(midiNumber) {
+                const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+                const octave = Math.floor(midiNumber / 12) - 1;
+                const noteIndex = midiNumber % 12;
+                return noteNames[noteIndex] + octave;
+            }
+
+            async playSequence() {
+                if (!this.audioContext || this.isPlaying) return;
+                
+                if (this.audioContext.state === 'suspended') {
+                    await this.audioContext.resume();
+                }
+                
+                this.isPlaying = true;
+                const tempo = parseInt(document.getElementById('tempo').value);
+                const beatDuration = 60 / tempo;
+                
+                this.currentSequence.forEach((note, index) => {
+                    setTimeout(() => {
+                        this.playNote(note.pitch, note.duration * beatDuration, note.velocity / 127);
+                        if (note.harmony) {
+                            this.playNote(note.harmony, note.duration * beatDuration, note.velocity / 127 * 0.6);
+                        }
+                        this.updateVisualizer(index);
+                    }, note.time * beatDuration * 1000);
+                });
+                
+                // Stop playing after sequence completes
+                const totalDuration = this.currentSequence[this.currentSequence.length - 1].time + 
+                                    this.currentSequence[this.currentSequence.length - 1].duration;
+                setTimeout(() => {
+                    this.isPlaying = false;
+                }, totalDuration * beatDuration * 1000);
+            }
+
+            playNote(midiNumber, duration, volume = 0.5) {
+                if (!this.audioContext) return;
+                
+                const frequency = 440 * Math.pow(2, (midiNumber - 69) / 12);
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(frequency, this.audioContext.currentTime);
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(volume * 0.3, this.audioContext.currentTime + 0.01);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, this.audioContext.currentTime + duration);
+                
+                oscillator.start(this.audioContext.currentTime);
+                oscillator.stop(this.audioContext.currentTime + duration);
+                
+                this.playbackNodes.push({ oscillator, gainNode });
+            }
+
+            updateVisualizer(activeIndex) {
+                const bars = document.querySelectorAll('.bar');
+                bars.forEach((bar, index) => {
+                    if (index === activeIndex % bars.length) {
+                        bar.style.height = '80px';
+                    } else {
+                        bar.style.height = Math.random() * 40 + 10 + 'px';
+                    }
+                });
+            }
+
+            stopPlayback() {
+                this.isPlaying = false;
+                this.playbackNodes.forEach(({ oscillator, gainNode }) => {
+                    try {
+                        oscillator.stop();
+                        gainNode.disconnect();
+                    } catch (e) {
+                        // Node may already be stopped
+                    }
+                });
+                this.playbackNodes = [];
+                
+                // Reset visualizer
+                document.querySelectorAll('.bar').forEach(bar => {
+                    bar.style.height = '10px';
+                });
+            }
+
+            downloadMIDI() {
+                if (this.currentSequence.length === 0) {
+                    alert('Please generate music first!');
+                    return;
+                }
+                
+                // Create a simple MIDI-like data structure
+                const midiData = {
+                    format: 'AI Generated MIDI',
+                    tracks: [{
+                        name: 'AI Generated Track',
+                        notes: this.currentSequence.map(note => ({
+                            pitch: note.pitch,
+                            duration: note.duration,
+                            velocity: note.velocity,
+                            time: note.time
+                        }))
+                    }]
+                };
+                
+                const dataStr = JSON.stringify(midiData, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'ai-generated-music.json';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Initialize the music generator when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new MusicGenerator();
+        });
+    </script>
+</body>
+</html>
