@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Chatbot for FAQs - Artificial Intelligence Project</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <style>
+        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .chat-container { max-width: 600px; margin: 20px auto; background: white; border-radius: 10px; box-shadow: 0 0 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .chat-header { background: #007bff; color: white; padding: 15px; text-align: center; }
+        .chat-messages { height: 400px; overflow-y: auto; padding: 20px; background: #f8f9fa; }
+        .message { margin-bottom: 15px; padding: 10px; border-radius: 10px; max-width: 80%; }
+        .user-message { background: #007bff; color: white; margin-left: auto; text-align: right; }
+        .bot-message { background: #e9ecef; color: #333; }
+        .chat-input { padding: 15px; background: white; border-top: 1px solid #dee2e6; }
+        .form-control { border-radius: 20px; }
+        .btn-send { border-radius: 20px; margin-left: 10px; }
+        /* Scrollbar Styling */
+        .chat-messages::-webkit-scrollbar { width: 6px; }
+        .chat-messages::-webkit-scrollbar-track { background: #f1f1f1; }
+        .chat-messages::-webkit-scrollbar-thumb { background: #007bff; border-radius: 3px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-header">
+                <h4>🤖 AI Chatbot for FAQs</h4>
+                <p>Ask questions about Artificial Intelligence Basics!</p>
+            </div>
+            <div id="chatMessages" class="chat-messages">
+                <div class="message bot-message">
+                    <strong>Bot:</strong> Hello! I'm your AI FAQ chatbot. Ask me about AI, Machine Learning, or related topics.
+                </div>
+            </div>
+            <div class="chat-input">
+                <div class="input-group">
+                    <input type="text" id="userInput" class="form-control" placeholder="Type your question here..." onkeypress="handleKeyPress(event)">
+                    <button class="btn btn-primary btn-send" onclick="sendMessage()">Send</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JavaScript for Chatbot Logic -->
+    <script>
+        // Step 1: Collect FAQs (Topic: Artificial Intelligence Basics)
+        const faqs = [
+            {
+                question: "What is Artificial Intelligence?",
+                answer: "Artificial Intelligence (AI) is the simulation of human intelligence processes by machines, especially computer systems. These processes include learning, reasoning, and self-correction."
+            },
+            {
+                question: "What are the types of AI?",
+                answer: "There are three main types of AI: Narrow AI (task-specific, like voice assistants), General AI (human-like intelligence across tasks), and Super AI (surpassing human intelligence in all aspects)."
+            },
+            {
+                question: "What is Machine Learning?",
+                answer: "Machine Learning (ML) is a subset of AI that enables computers to learn and improve from experience without being explicitly programmed. It uses algorithms to analyze data patterns."
+            },
+            {
+                question: "What is Deep Learning?",
+                answer: "Deep Learning is a subset of Machine Learning that uses neural networks with multiple layers (hence 'deep') to model complex patterns in data, excelling in tasks like image and speech recognition."
+            },
+            {
+                question: "What are the applications of AI?",
+                answer: "AI applications include healthcare (diagnostics), finance (fraud detection), autonomous vehicles, natural language processing (chatbots), and recommendation systems (like Netflix)."
+            },
+            {
+                question: "What is Neural Network?",
+                answer: "A Neural Network is a computing model inspired by the human brain, consisting of interconnected nodes (neurons) that process data in layers to recognize patterns and make decisions."
+            },
+            {
+                question: "What are the benefits of AI?",
+                answer: "Benefits of AI include increased efficiency, automation of repetitive tasks, better decision-making through data analysis, and innovations in fields like medicine and transportation."
+            },
+            {
+                question: "What are the challenges of AI?",
+                answer: "Challenges include ethical concerns (bias in algorithms), job displacement, data privacy issues, and the need for vast computational resources."
+            }
+        ];
+
+        // Step 2: Preprocessing (NLP-like in JS)
+        const stopwords = ['i', 'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours', 'he', 'she', 'it', 'its', 'they', 'them', 'their', 'what', 'which', 'who', 'whom', 'this', 'that', 'these', 'those', 'am', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'but', 'at', 'by', 'for', 'with', 'on', 'through', 'during', 'before', 'after', 'above', 'below', 'up', 'down', 'in', 'out', 'of', 'and', 'a', 'an', 'the', 'or', 'as', 'until', 'while', 'if', 'of', 'than', 'same', 'how', 'when', 'where', 'why', 'all', 'any', 'both', 'each', 'few', 'more', 'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own', 'so', 'than', 'too', 'very'];
+
+        function preprocess(text) {
+            // Clean: Lowercase, remove punctuation
+            text = text.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+            // Tokenize: Split into words
+            let tokens = text.split(' ');
+            // Remove stopwords and simulate lemmatization (simple stemming: remove common suffixes)
+            tokens = tokens.filter(word => !stopwords.includes(word) && word.length > 2);
+            tokens = tokens.map(word => word.replace(/^(ing|ed|es|s)$/, '')); // Basic stemming
+            return tokens;
+        }
+
+        // Step 3: Vectorization and Cosine Similarity
+        function getVector(tokens, allWords) {
+            const vector = {};
+            tokens.forEach(token => {
+                vector[token] = (vector[token] || 0) + 1; // Term frequency
+            });
+            // TF-IDF simplification: Just use frequency for demo (can enhance with IDF)
+            return allWords.map(word => vector[word] || 0);
+        }
+
+        function dotProduct(vecA, vecB) {
+            return vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
+        }
+
+        function magnitude(vec) {
+            return Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
+        }
+
+        function cosineSimilarity(userTokens, faqTokens, allWords) {
+            const vecA = getVector(userTokens, allWords);
+            const vecB = getVector(faqTokens, allWords);
+            const dot = dotProduct(vecA, vecB);
+            const magA = magnitude(vecA);
+            const magB = magnitude(vecB);
+            return magA === 0 || magB === 0 ? 0 : dot / (magA * magB);
+        }
+
+        function findBestMatch(userQuestion) {
+            const userTokens = preprocess(userQuestion);
+            if (userTokens.length === 0) return null;
+
+            // Get all unique words for vector space
+            const allWordsSet = new Set();
+            faqs.forEach(faq => {
+                const faqTokens = preprocess(faq.question);
+                faqTokens.forEach(word => allWordsSet.add(word));
+            });
+            userTokens.forEach(word => allWordsSet.add(word));
+            const allWords = Array.from(allWordsSet);
+
+            let bestMatch = null;
+            let maxSimilarity = 0;
+            const threshold = 0.3; // Tune this for sensitivity
+
+            faqs.forEach(faq => {
+                const faqTokens = preprocess(faq.question);
+                const similarity = cosineSimilarity(userTokens, faqTokens, allWords);
+                if (similarity > maxSimilarity) {
+                    maxSimilarity = similarity;
+                    bestMatch = faq;
+                }
+            });
+
+            return maxSimilarity > threshold ? bestMatch : null;
+        }
+
+        // Step 4: Chat UI Functions
+        function addMessage(content, isUser  = false) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser  ? 'user-message' : 'bot-message'}`;
+            messageDiv.innerHTML = `<strong>${isUser  ? 'You' : 'Bot'}:</strong> ${content}`;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const question = userInput.value.trim();
+            if (!question) return;
+
+            addMessage(question, true);
+            userInput.value = '';
+
+            const bestMatch = findBestMatch(question);
+            if (bestMatch) {
+                setTimeout(() => addMessage(bestMatch.answer), 500); // Simulate typing delay
+            } else {
+                setTimeout(() => addMessage("Sorry, I don't have an answer for that. Ask about AI basics like 'What is Machine Learning?'"), 500);
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+    </script>
+</body>
+</html>
